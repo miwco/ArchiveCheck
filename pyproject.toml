@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "archivecheck"
+version = "0.1.0"
+description = "Music cue sheet + end-credits extractor for archived films"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Mirko Ahonen" }]
+keywords = ["video", "archive", "music-recognition", "ocr", "credits", "cue-sheet"]
+
+# Core runtime dependency. CSV/TXT output works without it; openpyxl adds .xlsx.
+dependencies = [
+    "openpyxl>=3.1",
+]
+
+[project.optional-dependencies]
+# Music detector (recommended). Pulls TensorFlow, which requires NumPy 1.x.
+music = [
+    "numpy<2",
+    "inaSpeechSegmenter>=0.7.6",
+]
+
+[project.scripts]
+archivecheck = "archivecheck.cli:main"
+
+[tool.setuptools]
+packages = [
+    "archivecheck",
+    "archivecheck.audio",
+    "archivecheck.credits",
+    "archivecheck.report",
+]

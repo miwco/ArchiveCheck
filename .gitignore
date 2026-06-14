@@ -1,0 +1,28 @@
+# Secrets / local config
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Tool output (contains personal names — never commit)
+vc_output/
+
+# Local reference data with real personal names (PII) — keep out of the repo
+example/
+
+# Local test media
+samples/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

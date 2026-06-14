@@ -1,0 +1,18 @@
+# Core (Python deps). External binaries (ffmpeg, fpcalc, tesseract) are NOT pip
+# packages — see README for how to install them.
+openpyxl>=3.1        # Excel (.xlsx) output; CSV/TXT work without it
+
+# --- Music detector (RECOMMENDED) --------------------------------------------
+# inaSpeechSegmenter detects/times music vs speech. It is what times *unidentified*
+# music and flags music-under-dialogue. Pulls in TensorFlow (large download).
+# TensorFlow requires NumPy 1.x — the pin below is REQUIRED or TF fails to import.
+numpy<2
+inaSpeechSegmenter>=0.7.6
+
+# Recognition uses Chromaprint's `fpcalc` binary + the AcoustID HTTP API directly,
+# and credit structuring calls the Anthropic HTTP API directly, so no extra pip
+# packages are required for those.
+
+# Note: inaSpeechSegmenter may pull pyannote-core, which prefers NumPy>=2. That
+# conflict warning is harmless — the default (TensorFlow CNN) segmenter we use
+# does not import pyannote at runtime.

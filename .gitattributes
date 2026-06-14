@@ -1,0 +1,3 @@
+# Normalize line endings: let Git store text as LF, check out native.
+* text=auto
+*.py text eol=lf
