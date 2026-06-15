@@ -52,6 +52,14 @@ def _print_summary(s: FilmSummary) -> None:
                   f"({s.credits['structuring']}, {s.credits['frames']} frames)")
         else:
             print(f"  credits: FAILED - {s.credits.get('error')}")
+    if s.loudness:
+        if s.loudness.get("ok"):
+            verdict = "PASS" if s.loudness["passed"] else "FAIL"
+            print(f"  loudness: {s.loudness['integrated_lufs']:.1f} LUFS / "
+                  f"TP {s.loudness['true_peak_dbtp']:.1f} dBTP / "
+                  f"LRA {s.loudness['lra_lu']:.1f} LU  [{verdict}]")
+        else:
+            print(f"  loudness: FAILED - {s.loudness.get('error')}")
     for w in s.warnings:
         print(f"  ! {w}")
 
@@ -63,6 +71,7 @@ def main(argv: List[str] | None = None) -> int:
     parser.add_argument("-o", "--output", help="output root (default: ./vc_output)")
     parser.add_argument("--no-music", action="store_true", help="skip music analysis")
     parser.add_argument("--no-credits", action="store_true", help="skip credits extraction")
+    parser.add_argument("--no-loudness", action="store_true", help="skip EBU R128 loudness check")
     parser.add_argument("--credits-window", type=float,
                         help="seconds from the end to scan for credits")
     parser.add_argument("--keep-intermediate", action="store_true",
@@ -98,6 +107,7 @@ def main(argv: List[str] | None = None) -> int:
             video, out_dir,
             do_music=not args.no_music,
             do_credits=not args.no_credits,
+            do_loudness=not args.no_loudness,
             credits_window_sec=args.credits_window,
             keep_intermediate=args.keep_intermediate,
         )
@@ -121,6 +131,13 @@ def _write_index(out_root: str, summaries: List[FilmSummary]) -> None:
             "music_unidentified": s.music.get("unidentified", "") if s.music else "",
             "music_to_check": s.music.get("needs_check", "") if s.music else "",
             "credit_entries": s.credits.get("entries", "") if s.credits else "",
+            "loudness_lufs": s.loudness.get("integrated_lufs", "") if s.loudness else "",
+            "true_peak_dbtp": s.loudness.get("true_peak_dbtp", "") if s.loudness else "",
+            "lra_lu": s.loudness.get("lra_lu", "") if s.loudness else "",
+            "loudness_pass": ("yes" if s.loudness.get("passed") else "no") if s.loudness.get("ok") else "",
+            "resolution": s.fileinfo.get("resolution", "") if s.fileinfo else "",
+            "fps": s.fileinfo.get("fps", "") if s.fileinfo else "",
+            "video_codec": s.fileinfo.get("video_codec", "") if s.fileinfo else "",
             "warnings": "; ".join(s.warnings),
         })
     with open(os.path.join(out_root, "index.csv"), "w", newline="", encoding="utf-8-sig") as f:
@@ -145,6 +162,7 @@ def _check() -> int:
     print("\nCapabilities:")
     detector = "full (music vs speech)" if has_ina else "limited (recognised tracks only)"
     print(f"  music timing:        {detector if CONFIG.ffmpeg else 'no (needs ffmpeg)'}")
+    print(f"  loudness (EBU R128): {'yes' if CONFIG.ffmpeg else 'no (needs ffmpeg)'}")
     can_id = bool(CONFIG.fpcalc and CONFIG.acoustid_api_key)
     print(f"  song identification: {'yes' if can_id else 'no (needs fpcalc + ACOUSTID_API_KEY)'}")
     print(f"  credits OCR:         {'yes' if CONFIG.tesseract else 'no (needs tesseract)'}")

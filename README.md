@@ -17,7 +17,21 @@ text stays legible (≥720p recommended). Codec is irrelevant; ffmpeg decodes it
 > clearing)". A miss means "original score, library music, or simply not in the
 > database — needs a human check". It is not a legal rights oracle.
 
-## Install
+## Easy install (Windows)
+
+For a one-shot setup, from the repo folder run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+It installs the Python dependencies, installs ffmpeg + Tesseract via `winget`,
+best-effort downloads `fpcalc`, creates your `.env`, and prints a capability report.
+Then use the double-clickable **`run.bat`** (pick a folder, or drag a file/folder
+onto it) — no terminal needed. Add your free `ACOUSTID_API_KEY` to `.env` afterward
+for song identification.
+
+## Install (manual / other platforms)
 
 Requires **Python 3.10+** and a few external binaries. Commands below use the
 Windows `py` launcher; on macOS/Linux use `python3` instead (and install the
@@ -68,11 +82,31 @@ py -m archivecheck film.mp4                   # one file  -> vc_output\film\
 py -m archivecheck C:\proxies -o C:\out       # a folder  -> one subfolder each + index
 ```
 
-Options: `--no-music`, `--no-credits`, `--credits-window <sec>` (how far from the
-end to scan, default 180), `--keep-intermediate` (keep extracted audio/frames).
+Options: `--no-music`, `--no-credits`, `--no-loudness`, `--credits-window <sec>`
+(how far from the end to scan, default 180), `--keep-intermediate`.
 
 Per-film output folder contains `music_cuesheet.{csv,xlsx}`, `credits.{txt,csv,xlsx}`,
-and `summary.json`. Batch runs also write `index.csv` / `index.json`.
+`technical_report.txt` (loudness + file info), and `summary.json`. Batch runs also
+write `index.csv` / `index.json`.
+
+## Loudness (EBU R128)
+
+Each film's audio is checked against the broadcast spec in one ffmpeg pass:
+
+| Metric | Requirement | Source |
+|--------|-------------|--------|
+| Program loudness | **-23 LUFS** (pass within ±1.0 LU) | integrated loudness |
+| Max variation | **≤ 15 LU** | loudness range (LRA) |
+| True peak | **≤ -1 dBTP** | true peak |
+
+Results go to `technical_report.txt` (PASS/FAIL per metric), `summary.json`, the
+console line, and the batch `index.csv` (`loudness_lufs`, `true_peak_dbtp`,
+`lra_lu`, `loudness_pass`). Tolerances live in `CONFIG` (`loudness_target_lufs`,
+`loudness_tolerance_lu`, `lra_max_lu`, `true_peak_max_dbtp`).
+
+**File info is reference-only.** The same report lists resolution / fps / codec /
+container / audio config, but these are **not** pass/failed — the checked file is a
+proxy, so its codec and container legitimately differ from the master.
 
 ## Output schema (matches the Arcada archive)
 
