@@ -76,7 +76,10 @@ _PROMPT = (
     "copyright notices, and song/music license blocks (those are handled elsewhere). "
     "Do not invent entries.\n"
     "When a role clearly corresponds to one of these archive role names, use that "
-    "EXACT spelling; otherwise keep the credit's own wording: {roles}.\n\n"
+    "EXACT spelling; otherwise keep the credit's own wording: {roles}.\n"
+    "Format each person's name in normal name capitalization as 'Firstname "
+    "Lastname' (fix all-caps or garbled casing), but preserve genuine name "
+    "particles and intercaps such as 'von Essen', 'af Hällström', 'McKay'.\n\n"
     "CREDITS TEXT:\n"
 )
 

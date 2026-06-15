@@ -54,7 +54,8 @@ def _print_summary(s: FilmSummary) -> None:
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="archivecheck",
                                      description="Music cue sheet + end-credits extractor.")
-    parser.add_argument("input", nargs="?", help="video file or folder of videos")
+    parser.add_argument("inputs", nargs="*",
+                        help="one or more video files, folders, URLs, or a links .txt file")
     parser.add_argument("-o", "--output", help="output root (default: ./vc_output)")
     parser.add_argument("--no-music", action="store_true", help="skip music analysis")
     parser.add_argument("--no-credits", action="store_true", help="skip credits extraction")
@@ -70,14 +71,16 @@ def main(argv: List[str] | None = None) -> int:
     if args.check:
         return _check()
 
-    if not args.input:
-        parser.error("the following arguments are required: input")
+    if not args.inputs:
+        parser.error("the following arguments are required: inputs")
 
-    try:
-        inputs = gather_inputs(args.input)
-    except FileNotFoundError:
-        print(f"Input not found: {args.input}", file=sys.stderr)
-        return 2
+    inputs: List[tuple] = []
+    for arg in args.inputs:
+        try:
+            inputs.extend(gather_inputs(arg))
+        except FileNotFoundError:
+            print(f"Input not found: {arg}", file=sys.stderr)
+            return 2
     if not inputs:
         print("No videos found.", file=sys.stderr)
         return 2
