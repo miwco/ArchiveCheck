@@ -131,6 +131,16 @@ class Config:
         "Stillfotograf", "Stuntman", "Gaffer", "Ljusassistent", "Klippning",
     )
 
+    # Controlled vocabulary of legit credit titles (one per line). Roles from the
+    # film's credits are mapped onto this list so the database only gets approved
+    # titles. Edit the file to update; falls back to archive_roles if missing.
+    titles_file: Optional[str] = field(default_factory=lambda: (
+        os.environ.get("VC_TITLES_FILE")
+        or str(Path(__file__).resolve().parent.parent / "end_credtis_titles.txt")
+    ))
+    # Min fuzzy ratio (0..1) to accept a non-exact role -> title match.
+    title_match_cutoff: float = 0.84
+
     # --- output ------------------------------------------------------------- #
     output_root: Optional[str] = field(default_factory=lambda: os.environ.get("VC_OUTPUT_ROOT"))
 

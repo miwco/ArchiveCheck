@@ -125,10 +125,15 @@ proxy, so its codec and container legitimately differ from the master.
 Columns use the archive's Swedish field names so output maps 1:1 onto a record and
 is easy to check or import. CSVs are written UTF-8-with-BOM so Excel renders å/ä/ö.
 
-**`credits.*` → SLUTTEXTER (ALLA):** `Roll`, `Namn` (+ `Tidskod`, evidence of where
-the line was seen). With `ANTHROPIC_API_KEY` set, roles that clearly match the
-archive vocabulary (A-foto, Editerare, Manus&Regi, Producent, Tack till, …; see
-`CONFIG.archive_roles`) are normalised to that exact spelling.
+**`credits.*` → SLUTTEXTER (ALLA):** `Roll` (canonical archive title), `Namn`,
+`Roll (original)` (the credit's own wording, for verification), `Kontrolleras`
+(`Ja` when the role could not be mapped), and `Tidskod`. Every role is mapped onto
+the **controlled title list** in `end_credtis_titles.txt` (one title per line,
+typically `Svenska / English`) so the database only ever gets approved titles —
+edit that file to update the vocabulary. With `ANTHROPIC_API_KEY` set, Claude does
+the mapping semantically (handling abbreviations, synonyms, and the bilingual
+form); a fuzzy fallback is used without a key. Roles with no confident match are
+kept but flagged `Kontrolleras = Ja` for a human (never dropped, never invented).
 
 **`music_cuesheet.*` → MUSIKINFORMATION (one row per Musikstycke):** `Musikstycke`,
 `Namn`, `Stycket börjar`, `Stycket slutar`, `Längd`, `Kompositör`, `Instrumental`,

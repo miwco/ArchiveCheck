@@ -14,7 +14,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from archivecheck.util import fmt_timecode, slugify  # noqa: E402
 from archivecheck.credits.dedup import dedup_lines, CreditLine  # noqa: E402
 from archivecheck.credits.ocr import OcrFrame  # noqa: E402
-from archivecheck.credits.structure import heuristic_structure  # noqa: E402
+from archivecheck.credits.structure import heuristic_structure, enforce_titles, CreditEntry  # noqa: E402
+from archivecheck.credits.titles import map_role, load_titles  # noqa: E402
 from archivecheck.report.cuesheet import build_cuesheet, write_cuesheet  # noqa: E402
 from archivecheck.audio.segment import Segment  # noqa: E402
 from archivecheck.audio.recognize import RecognitionResult, Track  # noqa: E402
@@ -105,6 +106,25 @@ def test_heuristic_structure():
     check("dash separator parsed", ("Producer", "Bob Lee") in roles)
 
 
+def test_title_mapping():
+    if len(load_titles()) < 20:
+        print("[SKIP] title mapping (end_credtis_titles.txt missing)")
+        return
+    check("exact swedish-side match", (map_role("A-foto") or "").startswith("A-foto /"))
+    check("fuzzy plural match", map_role("Statister") == "Statist / Extra")
+    check("english-side match", (map_role("Editor") or "").startswith("Klipp /"))
+    check("no false A->B match", map_role("Zzqqx Nonsense") is None)
+    # enforce_titles: canonical role replaces wording; unmappable is flagged
+    entries = [
+        CreditEntry(role="Statister", name="Aaro Salmela"),
+        CreditEntry(role="Blergh", name="Nobody"),
+    ]
+    enforce_titles(entries)
+    check("role mapped to canonical", entries[0].role == "Statist / Extra")
+    check("original role kept", entries[0].original_role == "Statister")
+    check("unmappable flagged", entries[1].needs_check and entries[1].role == "Blergh")
+
+
 def test_dedup():
     frames = [
         OcrFrame(0.0, ["Director Jane Doe"]),
@@ -169,6 +189,7 @@ if __name__ == "__main__":
     test_input_source()
     test_slugify_safe()
     test_heuristic_structure()
+    test_title_mapping()
     test_dedup()
     test_cue_merge()
     test_needs_check()

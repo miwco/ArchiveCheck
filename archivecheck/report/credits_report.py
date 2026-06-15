@@ -11,14 +11,17 @@ from ..credits.structure import CreditEntry
 from ..util import fmt_timecode
 
 # Headers mirror the archive's SLUTTEXTER (ALLA) table: Roll | Namn.
-# Tidskod (timecode) is appended as evidence of where the line was seen.
-_COLUMNS = ["Roll", "Namn", "Tidskod"]
+# "Roll" is the canonical archive title; "Roll (original)" keeps the credit's own
+# wording for verification; "Kontrolleras" flags roles that didn't map to a title.
+_COLUMNS = ["Roll", "Namn", "Roll (original)", "Kontrolleras", "Tidskod"]
 
 
 def _row(e: CreditEntry) -> dict:
     return {
         "Roll": e.role,
         "Namn": e.name,
+        "Roll (original)": e.original_role or "",
+        "Kontrolleras": "Ja" if e.needs_check else "",
         "Tidskod": fmt_timecode(e.timestamp) if e.timestamp is not None else "",
     }
 
