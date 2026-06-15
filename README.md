@@ -80,7 +80,14 @@ py -m archivecheck --check                    # show what's installed / capable
 
 py -m archivecheck film.mp4                   # one file  -> vc_output\film\
 py -m archivecheck C:\proxies -o C:\out       # a folder  -> one subfolder each + index
+py -m archivecheck "https://host/player.php?id=..."   # an online player link (HLS)
+py -m archivecheck links.txt -o C:\out        # a "ID URL" links file, one film per line
 ```
+
+Inputs can be a **local file/folder**, a **direct/HLS stream or player-page URL**,
+or a **`.txt` links file** (`ID URL` per line). Player pages are fetched and their
+embedded stream extracted automatically; ffmpeg reads the stream directly, so no
+full download is needed.
 
 Options: `--no-music`, `--no-credits`, `--no-loudness`, `--credits-window <sec>`
 (how far from the end to scan, default 180), `--keep-intermediate`.
@@ -128,6 +135,23 @@ Automation fills the **timing** (`Stycket börjar/slutar`, `Längd`) — the fie
 archive most often leaves as *Information saknas!* — plus `Namn`/`Artist` when a
 track is recognised. Columns it cannot determine (composer, lyricist, arranger,
 rights, license) are left blank for a human, exactly as the archive shows them.
+
+## Credits OCR on low-res proxies
+
+Web proxies are often **360p**, where credit text is barely legible. The pipeline
+compensates:
+- **Upscales** credit frames toward ~1080p (lanczos) before OCR — the single
+  biggest accuracy gain.
+- Reads with **`swe+eng`** Tesseract data so Swedish diacritics (å/ä/ö) come out
+  right (`install.ps1` downloads the Swedish data; it falls back to `eng` if absent).
+- Uses **word bounding boxes** to detect the two-column `Roll  Namn` layout and
+  keep each role paired with its name.
+- **Filters by OCR confidence**, so footage that appears in the scan window before
+  the credits roll (low-confidence junk) is dropped while real credit text is kept.
+- Samples at a higher frame rate and **de-duplicates** so the moving roll is caught.
+
+With an `ANTHROPIC_API_KEY`, a final LLM pass cleans residual OCR noise and maps
+roles onto the archive vocabulary; without it, a heuristic parser is used.
 
 ## How it works
 

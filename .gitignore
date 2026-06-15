@@ -14,9 +14,17 @@ env/
 
 # Tool output (contains personal names — never commit)
 vc_output/
+vc_output*/
 
 # Local binaries fetched by install.ps1 (e.g. fpcalc)
 tools/
+
+# Local OCR language data (downloaded) and scratch frames
+tessdata/
+_credtest/
+
+# Test videos (large, and contain personal data)
+testvideos/
 
 # Local reference data with real personal names (PII) — keep out of the repo
 example/

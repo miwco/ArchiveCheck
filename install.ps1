@@ -1,5 +1,5 @@
 <#
-  ArchiveCheck — guided installer (Windows)
+  ArchiveCheck - guided installer (Windows)
 
   Installs the Python dependencies and the external tools the checker needs, then
   prints a capability report. Re-runnable: it skips what is already present.
@@ -39,11 +39,48 @@ if (Have "winget") {
         winget install -e --id UB-Mannheim.TesseractOCR --accept-source-agreements --accept-package-agreements
     } else { Write-Host "  tesseract: already installed" }
 } else {
-    Write-Host "  winget not available — install ffmpeg and tesseract manually (see README)." -ForegroundColor Yellow
+    Write-Host "  winget not available - install ffmpeg and tesseract manually (see README)." -ForegroundColor Yellow
+}
+
+# --- .env (create early so later steps can append keys/paths) ------------- #
+if (-not (Test-Path ".env") -and (Test-Path ".env.example")) {
+    Copy-Item ".env.example" ".env"
+    Write-Host "  created .env from .env.example"
+}
+
+# --- 3b. Swedish OCR language data ---------------------------------------- #
+Write-Host "`n[3b/4] Setting up Swedish OCR language (credits are in Swedish)..." -ForegroundColor Cyan
+$tessExe = (Get-Command tesseract -ErrorAction SilentlyContinue).Source
+if ($tessExe) {
+    $sysTd = Join-Path (Split-Path $tessExe) "tessdata"
+    $sweUrl = "https://github.com/tesseract-ocr/tessdata_fast/raw/main/swe.traineddata"
+    $haveSwe = ((& tesseract --list-langs 2>&1) -join "`n") -match '(?m)^\s*swe\s*$'
+    if ($haveSwe) {
+        Write-Host "  Swedish (swe) already installed"
+    } else {
+        try {
+            Invoke-WebRequest $sweUrl -OutFile (Join-Path $sysTd "swe.traineddata") -UseBasicParsing
+            Write-Host "  installed swe.traineddata to $sysTd"
+        } catch {
+            # No write access to the install dir - use a local tessdata + env var.
+            $localTd = Join-Path $PSScriptRoot "tessdata"
+            New-Item -ItemType Directory -Force -Path $localTd | Out-Null
+            Copy-Item (Join-Path $sysTd "eng.traineddata") $localTd -ErrorAction SilentlyContinue
+            Copy-Item (Join-Path $sysTd "osd.traineddata") $localTd -ErrorAction SilentlyContinue
+            Copy-Item (Join-Path $sysTd "configs") $localTd -Recurse -Force -ErrorAction SilentlyContinue
+            try { Invoke-WebRequest $sweUrl -OutFile (Join-Path $localTd "swe.traineddata") -UseBasicParsing } catch {}
+            if ((Test-Path ".env") -and ((Get-Content ".env" -Raw) -notmatch '(?m)^\s*TESSDATA_PREFIX')) {
+                Add-Content ".env" "`nTESSDATA_PREFIX=$localTd"
+            }
+            Write-Host "  installed Swedish to local $localTd (TESSDATA_PREFIX set in .env)" -ForegroundColor Yellow
+        }
+    }
+} else {
+    Write-Host "  tesseract not found yet; re-run after it's on PATH to add Swedish." -ForegroundColor Yellow
 }
 
 # --- 4. fpcalc (Chromaprint) best-effort ---------------------------------- #
-Write-Host "`n[3/4] Setting up fpcalc (Chromaprint, optional — for song identification)..." -ForegroundColor Cyan
+Write-Host "`n[3/4] Setting up fpcalc (Chromaprint, optional - for song identification)..." -ForegroundColor Cyan
 $fpcalcExe = ""
 if (Have "fpcalc") {
     $fpcalcExe = (Get-Command fpcalc).Source
@@ -65,23 +102,18 @@ if (Have "fpcalc") {
     }
 }
 
-# --- 5. .env --------------------------------------------------------------- #
-Write-Host "`n[4/4] Configuring .env..." -ForegroundColor Cyan
-if (-not (Test-Path ".env") -and (Test-Path ".env.example")) {
-    Copy-Item ".env.example" ".env"
-    Write-Host "  created .env from .env.example"
-}
+# --- 5. .env (record fpcalc path) ----------------------------------------- #
+Write-Host "`n[4/4] Finalising .env..." -ForegroundColor Cyan
 if ($fpcalcExe -and (Test-Path ".env")) {
     $envText = Get-Content ".env" -Raw
-    if ($envText -notmatch "(?m)^\s*FPCALC\s*=\s*\S") {
+    if ($envText -notmatch '(?m)^\s*FPCALC\s*=\s*\S') {
         Add-Content ".env" "`nFPCALC=$fpcalcExe"
         Write-Host "  wrote FPCALC path to .env"
     }
 }
 
 # Refresh PATH for this session so --check sees freshly installed tools.
-$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" +
-            [System.Environment]::GetEnvironmentVariable("Path","User")
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 
 Write-Host "`n=== Done. Capability check: ===" -ForegroundColor Green
 & $py -m archivecheck --check

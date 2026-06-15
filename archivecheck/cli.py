@@ -17,22 +17,9 @@ from pathlib import Path
 from typing import List
 
 from .config import CONFIG
+from .input_source import gather_inputs, is_url, resolve_stream
 from .pipeline import process_video, FilmSummary, _summary_dict
 from .util import slugify
-
-VIDEO_EXTS = {".mp4", ".mov", ".mkv", ".avi", ".m4v", ".mxf", ".webm", ".wmv"}
-
-
-def _gather(path: str) -> List[str]:
-    p = Path(path)
-    if p.is_file():
-        return [str(p)]
-    if p.is_dir():
-        return sorted(
-            str(f) for f in p.iterdir()
-            if f.is_file() and f.suffix.lower() in VIDEO_EXTS
-        )
-    raise FileNotFoundError(path)
 
 
 def _print_summary(s: FilmSummary) -> None:
@@ -87,24 +74,31 @@ def main(argv: List[str] | None = None) -> int:
         parser.error("the following arguments are required: input")
 
     try:
-        videos = _gather(args.input)
+        inputs = gather_inputs(args.input)
     except FileNotFoundError:
         print(f"Input not found: {args.input}", file=sys.stderr)
         return 2
-    if not videos:
-        print("No video files found.", file=sys.stderr)
+    if not inputs:
+        print("No videos found.", file=sys.stderr)
         return 2
 
     out_root = args.output or CONFIG.output_root or os.path.join(os.getcwd(), "vc_output")
     Path(out_root).mkdir(parents=True, exist_ok=True)
 
     summaries: List[FilmSummary] = []
-    for video in videos:
-        name = slugify(Path(video).stem)
-        out_dir = os.path.join(out_root, name)
-        print(f"\n== {Path(video).name} ==")
+    for label, source in inputs:
+        print(f"\n== {label} ==")
+        # Resolve player-page URLs to a playable stream; skip on failure so one
+        # bad link doesn't abort the batch.
+        if is_url(source):
+            try:
+                source = resolve_stream(source)
+            except Exception as e:
+                print(f"  ! could not resolve URL: {e}")
+                continue
+        out_dir = os.path.join(out_root, slugify(label))
         summary = process_video(
-            video, out_dir,
+            source, out_dir,
             do_music=not args.no_music,
             do_credits=not args.no_credits,
             do_loudness=not args.no_loudness,

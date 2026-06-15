@@ -91,7 +91,17 @@ class Config:
     # --- credits tunables --------------------------------------------------- #
     # How far from the end we assume credits live, when not auto-detecting.
     credits_window_sec: float = 180.0
-    credits_fps: float = 1.0                # frames per second sampled in window
+    credits_fps: float = 2.0                # frames per second sampled in window
+    # Upscale credit frames toward this height before OCR. Low-res proxies (e.g.
+    # 360p) OCR very poorly at native size; upscaling to ~1080p is a large win.
+    credits_target_height: int = 1080
+    # OCR languages (Tesseract). swe+eng fixes Swedish diacritics (å/ä/ö); falls
+    # back to whatever subset is actually installed.
+    ocr_lang: str = "swe+eng"
+    # Drop OCR lines below this mean Tesseract confidence (0..100). The credits
+    # window may include live footage before the credits roll; junk OCR from
+    # footage scores low, real credit text scores high.
+    ocr_min_confidence: float = 55.0
     # Fuzzy-match ratio (0..100) above which two OCR lines are "the same line".
     dedup_similarity: int = 88
     min_resolution_warn: int = 720          # warn if proxy height below this
@@ -113,7 +123,8 @@ class Config:
         "A-foto", "B-foto", "Editerare", "Intervju", "Intervjuobjekt",
         "Ljud", "Manus&Regi", "Producent", "Regi", "Manus", "Klippning",
         "Foto", "Ljussättning", "Scenografi", "Mask", "Kostym", "Musik",
-        "Skådespelare", "Roll", "Tack till",
+        "Skådespelare", "Roll", "Tack till", "Statister", "Scripta",
+        "Stillfotograf", "Stuntman", "Gaffer", "Ljusassistent", "Klippning",
     )
 
     # --- output ------------------------------------------------------------- #

@@ -38,6 +38,15 @@ def _looks_like_role_header(text: str) -> bool:
     return upper / len(letters) > 0.8 and len(text) <= 40
 
 
+def _known_role(text: str) -> Optional[str]:
+    """Return the canonical archive role if ``text`` matches one (case-insensitive)."""
+    t = text.strip().lower()
+    for role in CONFIG.archive_roles:
+        if t == role.lower():
+            return role
+    return None
+
+
 def heuristic_structure(lines: List[CreditLine]) -> List[CreditEntry]:
     entries: List[CreditEntry] = []
     current_role: Optional[str] = None
@@ -48,6 +57,8 @@ def heuristic_structure(lines: List[CreditLine]) -> List[CreditEntry]:
             role, name = parts[0].strip(), parts[1].strip()
             entries.append(CreditEntry(role=role, name=name, timestamp=cl.timestamp))
             current_role = role
+        elif _known_role(text):
+            current_role = _known_role(text)
         elif _looks_like_role_header(text):
             current_role = text.title()
         elif current_role:

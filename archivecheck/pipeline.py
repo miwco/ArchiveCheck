@@ -58,8 +58,9 @@ def process_video(
     Path(work_dir).mkdir(parents=True, exist_ok=True)
 
     info = probe(video_path)
-    summary = FilmSummary(video=os.path.abspath(video_path),
-                          duration_tc=fmt_timecode(info.duration_sec))
+    # Keep URLs as-is; only local paths get absolutised.
+    src = video_path if "://" in video_path else os.path.abspath(video_path)
+    summary = FilmSummary(video=src, duration_tc=fmt_timecode(info.duration_sec))
 
     if info.height and info.height < CONFIG.min_resolution_warn:
         summary.warnings.append(
@@ -125,7 +126,12 @@ def process_video(
             else:
                 start, end = credits_window(info.duration_sec, credits_window_sec)
                 frame_dir = os.path.join(work_dir, "credit_frames")
-                frames = extract_credit_frames(video_path, frame_dir, start, end)
+                # Upscale low-res proxies toward ~1080p so credit text OCRs well.
+                upscale = 1
+                if info.height:
+                    upscale = max(1, round(CONFIG.credits_target_height / info.height))
+                frames = extract_credit_frames(video_path, frame_dir, start, end,
+                                               upscale=upscale)
                 ocr = ocr_frames(frames, engine)
                 lines = dedup_lines(ocr)
                 entries, method = structure_credits(lines)

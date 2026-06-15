@@ -19,6 +19,8 @@ from archivecheck.report.cuesheet import build_cuesheet, write_cuesheet  # noqa:
 from archivecheck.audio.segment import Segment  # noqa: E402
 from archivecheck.audio.recognize import RecognitionResult, Track  # noqa: E402
 from archivecheck.audio.loudness import _parse_loudnorm_json, _evaluate  # noqa: E402
+from archivecheck.credits.ocr import _tsv_to_lines, _good_text  # noqa: E402
+from archivecheck.input_source import is_url, parse_links_file, _label_from_url  # noqa: E402
 
 passed = 0
 
@@ -49,6 +51,39 @@ def test_loudness_eval():
     check("true-peak too hot fails", not _evaluate(-23.0, -0.5, 7.0).true_peak_pass)
     check("lra too wide fails", not _evaluate(-23.0, -2.0, 20.0).lra_pass)
     check("integrated off-target fails", not _evaluate(-20.0, -2.0, 7.0).integrated_pass)
+
+
+def test_tsv_columns_and_filter():
+    def row(blk, par, ln, word, left, width, conf, text):
+        return f"5\t1\t{blk}\t{par}\t{ln}\t{word}\t{left}\t100\t{width}\t40\t{conf}\t{text}"
+    tsv = "\n".join([
+        "level\tpage\tblock\tpar\tline\tword\tleft\ttop\twidth\theight\tconf\ttext",
+        # two-column role/name: wide gap -> tab; intra-name gap -> space
+        row(1, 1, 1, 1, 50, 200, 92, "Ljusassistent"),
+        row(1, 1, 1, 2, 600, 90, 90, "Oliver"),
+        row(1, 1, 1, 3, 700, 80, 88, "Milros"),
+        # low-confidence junk line -> dropped
+        row(1, 2, 1, 1, 50, 60, 20, "xhzq"),
+        # single-column name
+        row(1, 3, 1, 1, 300, 100, 85, "Aaro"),
+        row(1, 3, 1, 2, 410, 140, 85, "Salmela"),
+    ])
+    lines = _tsv_to_lines(tsv)
+    check("column gap -> tab", "Ljusassistent\tOliver Milros" in lines)
+    check("low-confidence dropped", not any("xhzq" in l for l in lines))
+    check("single-column name kept", "Aaro Salmela" in lines)
+    check("good_text rejects noise", not _good_text("|| , .") and _good_text("Alice Olin"))
+
+
+def test_input_source(tmp=None):
+    check("is_url detects http", is_url("https://x/y") and not is_url("C:/films"))
+    check("label from player url", _label_from_url("https://h/player.php?id=abc123") == "abc123")
+    p = os.path.join(tempfile.mkdtemp(), "links.txt")
+    with open(p, "w", encoding="utf-8") as f:
+        f.write("1162 https://a/player.php?id=x\n\n# comment\n1163 https://b/p?id=y\n")
+    pairs = parse_links_file(p)
+    check("links file parsed", pairs == [("1162", "https://a/player.php?id=x"),
+                                         ("1163", "https://b/p?id=y")])
 
 
 def test_slugify_safe():
@@ -130,6 +165,8 @@ def test_needs_check():
 if __name__ == "__main__":
     test_timecode()
     test_loudness_eval()
+    test_tsv_columns_and_filter()
+    test_input_source()
     test_slugify_safe()
     test_heuristic_structure()
     test_dedup()

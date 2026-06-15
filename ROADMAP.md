@@ -14,7 +14,7 @@ results map 1:1 for manual checking / future import.
 - Per-film output folder + batch `index.csv`/`index.json`; UTF-8-BOM CSV + XLSX.
 - Graceful degradation; `py -m archivecheck --check` reports capability. Smoke tests.
 
-## In progress (branch `LUFS-check`)
+## Done (merged to `main`)
 - **EBU R128 loudness check** — one ffmpeg `loudnorm` pass → integrated loudness
   (-23 LUFS ±1), loudness range (≤15 LU), true peak (≤-1 dBTP); PASS/FAIL in
   `technical_report.txt`, `summary.json`, console, and `index.csv`.
@@ -23,10 +23,18 @@ results map 1:1 for manual checking / future import.
 - **Easy install** — `install.ps1` (deps + winget binaries + fpcalc + .env + check)
   and double-clickable `run.bat` (folder picker).
 
+## In progress (branch `video-tests`)
+- **Credit OCR for low-res (360p) proxies** — upscale to ~1080p, `swe+eng` data,
+  two-column `Roll  Namn` detection via word boxes, and OCR-confidence filtering to
+  drop footage scanned before the credits roll.
+- **URL / links-file input** — accept a player-page URL (resolves the embedded HLS
+  stream) or a `ID URL` links file; ffmpeg streams directly, no download needed.
+
 ## Next / ideas (not started)
 - Technical QC checks (**format profile first**: resolution/fps/codec vs a target),
   black/freeze-frame detection, letterbox/interlacing, silence at head/tail.
-- Auto-detect the credits window (currently the last N seconds).
+- Auto-detect the credits window (currently the last N seconds) — would also speed
+  up low-res OCR by skipping non-credit footage.
 - Local web GUI (Streamlit) for non-technical archivists.
 - Push structured output into the SSO-protected archive.
 
