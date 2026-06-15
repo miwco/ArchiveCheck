@@ -112,8 +112,12 @@ class Config:
     lra_max_lu: float = 15.0                # max loudness range (variation)
     true_peak_max_dbtp: float = -1.0        # max true peak
 
-    # Model used for credit structuring (Anthropic).
-    anthropic_model: str = "claude-opus-4-8"
+    # Model used for credit structuring (Anthropic). Defaults to the cheap, fast
+    # Haiku — credit cleanup is a light text task (~1 cent/film). Override with
+    # ANTHROPIC_MODEL in .env (e.g. claude-opus-4-8 for maximum quality).
+    anthropic_model: str = field(
+        default_factory=lambda: os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5")
+    )
 
     # Controlled role vocabulary from the Arcada archive (SLUTTEXTER). When a
     # credit clearly matches one of these, the LLM normalises to this exact

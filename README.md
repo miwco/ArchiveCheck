@@ -59,8 +59,13 @@ API keys (optional but recommended):
 
 - `ACOUSTID_API_KEY` — free, register at https://acoustid.org/new-application. Without
   it, music timing still works but nothing gets identified.
-- `ANTHROPIC_API_KEY` — used to structure messy OCR text into clean role/name rows.
-  Without it, a heuristic parser is used (works, but weaker on unusual layouts).
+- `ANTHROPIC_API_KEY` — structures messy OCR text into clean role/name rows and
+  removes duplicate / stylized-font noise. Get one at
+  [console.anthropic.com](https://console.anthropic.com) → Settings → API Keys
+  (pay-as-you-go, billed separately from any Claude subscription; each user uses
+  their own key). Without it, a heuristic parser is used (works, but weaker on
+  unusual layouts and noise). Defaults to the cheap `claude-haiku-4-5` (~1¢/film);
+  set `ANTHROPIC_MODEL=claude-opus-4-8` in `.env` for maximum quality.
 
 The tool finds binaries on `PATH`, or via env overrides `FFMPEG`, `FFPROBE`,
 `FPCALC`, `TESSERACT` (each may point at the binary or its folder). Keys and
