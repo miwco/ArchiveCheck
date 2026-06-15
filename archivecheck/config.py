@@ -136,7 +136,7 @@ class Config:
     # titles. Edit the file to update; falls back to archive_roles if missing.
     titles_file: Optional[str] = field(default_factory=lambda: (
         os.environ.get("VC_TITLES_FILE")
-        or str(Path(__file__).resolve().parent.parent / "end_credtis_titles.txt")
+        or str(Path(__file__).resolve().parent.parent / "end_credits_titles.txt")
     ))
     # Min fuzzy ratio (0..1) to accept a non-exact role -> title match.
     title_match_cutoff: float = 0.84

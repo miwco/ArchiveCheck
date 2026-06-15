@@ -1,0 +1,192 @@
+# Arcada end-credit titles — controlled vocabulary
+#
+# ArchiveCheck maps each role found in a film's credits to the closest title in
+# this list, so the archive only ever stores approved titles.
+#
+# Format:
+#   - One title per line, written as "Svenska / English".
+#   - Blank lines and lines starting with "#" are ignored (use them for layout).
+#   - The section headers below are comments for humans only — grouping is purely
+#     for readability and does not affect how roles are matched.
+#   - Edit freely: add, remove, or move titles. Keep a title's exact spelling, as
+#     it is what gets written to the archive.
+
+
+# ── Regi / Directing ─────────────────────────────────────────────────────────
+Andra regiassistent / Second Assistent Director (SAD)
+Andra team regissör / Second Unit Director
+Första regiassistent / First Assistant Director (FAD)
+Regissör / Director
+
+# ── Manus / Writing ──────────────────────────────────────────────────────────
+Manus / Screenplay
+Manusförfattare / Script Writer
+
+# ── Framför kameran / On camera ──────────────────────────────────────────────
+Gäst / Guest
+Medverkande / Participator
+Programvärd / Host
+Reporter / Reporter
+Skådespelare / Actor
+Statist / Extra
+
+# ── Rollbesättning / Casting ─────────────────────────────────────────────────
+Rollbesättning / Casting
+Rollbesättningsassistent / Casting Assistant
+
+# ── Producent & produktion / Producers & production ──────────────────────────
+Exekutiv producent / Executive producer
+Medproducent / Co-producer
+Producent / Producer
+Produktionsassistent / Assistant Production Manager
+Produktionsledare / Production Manager
+Scripta / Script Supervisor
+
+# ── Foto, ljus & grip / Camera, lighting & grip ──────────────────────────────
+A-foto / Director of Photography (DoP)
+B-foto / First Assistant Camera (Focus Puller)
+C-foto / Second Assistant Camera (Clapper Loader)
+Chefselektriker / Gaffer
+Chefspassare / Key Grip
+Digital Imagining Technician (DIT) / Digital Imagining Technician (DIT)
+Drönar operatör / Drone Operator
+Elassistent / Best Boy/girl
+Kamera / Camera Operator
+Kameraassistent / Assistant Camera
+Kran operatör / Crane Operator
+Ljusassistent / Lighting Assistant
+Ljussättare / Lighting Technician
+Passarassistent / Grip Best Boy/Girl
+Passare / Grip
+Stedicam operatör / Stedicam Operator
+Stillfotograf / Still Photography
+Undervattensfotograf / Underwater Photography
+Video operatör / Video Operator
+
+# ── Ljud / Sound ─────────────────────────────────────────────────────────────
+A-ljud / Sound Mixer
+B-ljud / Boom Operator
+Dubbning / Voice over
+Eftersynk / ADR Editor
+Foley / Foley Artist
+Inspelningsljudtekniker / Sound Recordist
+Ljuddesign / Sound Designer
+Ljudeffektsbearbetning / Sound Effects Editor
+Ljudsättarassistent / Assistant Sound Editor
+Ljudsättare / Sound Editor
+
+# ── Musik / Music ────────────────────────────────────────────────────────────
+Kompositör / Composer
+Musik / Music by
+Musik inspelning / Music Recordist
+Musik mixning / Music Mixer
+Musik producent / Music Producer
+Musiker / Musician
+
+# ── Klipp & efterarbete / Editing & post-production ───────────────────────────
+Arkivmaterial / Archive Material
+Efterarbetsansvarig / Post Production Manager
+Färgsättning / Colorist
+Klipp / Editor
+Klipp-trailer / Trailer editor
+Offline klipp / Offline Editor
+Postproduktionsassistent / Post Production Assistant
+Synkläggare / Assistant editor
+
+# ── Visuella effekter / Visual effects ───────────────────────────────────────
+Digital artist / Digital Artist
+Digital kompositör / Digital Compositor
+Matte painter / Matte Painter
+Visuella effekter / Visual Effects
+
+# ── Specialeffekter / Special effects ────────────────────────────────────────
+Pyroteknik / Pyrotechnics
+Specialeffekter / Special Effects
+Specialeffekts assistent / Special Effects Assistant
+Specialeffektskoordinator / Special Effects Coordinator
+Specialeffektstekniker / Special Effects Technichian
+
+# ── Scenografi & rekvisita / Art department & props ──────────────────────────
+Attributör / Property Master
+Attributör assistent / Assistent Property Master
+Målare / Painter
+Rekvisita / Props
+Rekvisita tillverkning / Props Builder
+Rekvisitör / Set Dresser
+Scenograf / Art Director
+Scenografiassistent / Assistant Art Director
+Snickare / Carpenter
+Storyboard artist / Storyboard Artist
+
+# ── Grafik & affisch / Graphics & poster ─────────────────────────────────────
+Affisch designer / Poster Designer
+Grafikansvarig / Graphics Design Manager
+Grafiker / Graphics Designer
+Illustratör / Illustrator
+Sluttexter / End Title
+
+# ── Kostym & garderob / Costume & wardrobe ───────────────────────────────────
+Kostymassistent / Costume Assistant
+Kostymdesign / Costume Design
+Kostymör / Wardrobe
+
+# ── Mask & smink / Hair & makeup ─────────────────────────────────────────────
+Frisör / Hairdresser
+Hårstylist / Hair Stylist
+Maskör / Makeup Artist
+SFX maskör / SFX Makeup Artist
+Sminkör / Makeup Assistant
+
+# ── Sociala medier & webb / Social media & web ───────────────────────────────
+Someansvarig / Social Media Manager
+Someteam / Social Media team
+Webbansvarig / Web Manager
+Webbteam / Web Team
+
+# ── Flerkamera / Multi-camera (broadcast) ────────────────────────────────────
+Bildkontroll / Image Engineer
+Bildmixer / Vision Mixer
+Huvudproducent / Main Producer
+Huvudregissör / Main Director
+Media operatör / Media Operator
+Studioman / Floor Manager
+Sändningstekniker / Broadcast Engineer
+Teknisk ledare / Technical Operations Manager
+
+# ── Stunt / Stunts ───────────────────────────────────────────────────────────
+Stunt / Stunts
+Stunt dubbel / Stunt Double
+Stunt koordinator / Stunt Coordinator
+Stuntchaufför / Stunt Driver
+
+# ── Inspelningsplats / Locations ─────────────────────────────────────────────
+Platsassistent / Location Assistant
+Platschef / Location Manager
+Rekognosering / Location Scout
+Rekogniseringsassistent / Assistant Location Scout
+
+# ── Transport / Transport ────────────────────────────────────────────────────
+Chaufför / Driver
+
+# ── Tack / Thanks ────────────────────────────────────────────────────────────
+Speciellt tack till / Special Thanks
+Tack till / Thanks
+
+# ── Övrigt / Other ───────────────────────────────────────────────────────────
+Arbetsgrupp / Team
+Assistent / Assistant
+Catering / Catering
+Dramaturg / Dramturgy
+Handledare / Supervisor
+Idé / Idea
+Inspelningsassistent / Runner
+Intimitetsstödperson / Intimacy support person
+Koncept / Concept
+Konsultation / Consultation
+Koreografi / Coreography
+Marknadsföring / Marketing
+Mentor / Mentor
+Research / Research
+Sponsor / Sponsor
+Tolk / Translator
+Översättning / Translation

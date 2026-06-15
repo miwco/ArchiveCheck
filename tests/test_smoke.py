@@ -108,7 +108,7 @@ def test_heuristic_structure():
 
 def test_title_mapping():
     if len(load_titles()) < 20:
-        print("[SKIP] title mapping (end_credtis_titles.txt missing)")
+        print("[SKIP] title mapping (end_credits_titles.txt missing)")
         return
     check("exact swedish-side match", (map_role("A-foto") or "").startswith("A-foto /"))
     check("fuzzy plural match", map_role("Statister") == "Statist / Extra")

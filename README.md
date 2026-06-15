@@ -128,7 +128,7 @@ is easy to check or import. CSVs are written UTF-8-with-BOM so Excel renders å/
 **`credits.*` → SLUTTEXTER (ALLA):** `Roll` (canonical archive title), `Namn`,
 `Roll (original)` (the credit's own wording, for verification), `Kontrolleras`
 (`Ja` when the role could not be mapped), and `Tidskod`. Every role is mapped onto
-the **controlled title list** in `end_credtis_titles.txt` (one title per line,
+the **controlled title list** in `end_credits_titles.txt` (one title per line,
 typically `Svenska / English`) so the database only ever gets approved titles —
 edit that file to update the vocabulary. With `ANTHROPIC_API_KEY` set, Claude does
 the mapping semantically (handling abbreviations, synonyms, and the bilingual
