@@ -96,6 +96,12 @@ class Config:
     dedup_similarity: int = 88
     min_resolution_warn: int = 720          # warn if proxy height below this
 
+    # --- loudness (EBU R128) ------------------------------------------------ #
+    loudness_target_lufs: float = -23.0     # program loudness target
+    loudness_tolerance_lu: float = 1.0      # pass if integrated within ± this
+    lra_max_lu: float = 15.0                # max loudness range (variation)
+    true_peak_max_dbtp: float = -1.0        # max true peak
+
     # Model used for credit structuring (Anthropic).
     anthropic_model: str = "claude-opus-4-8"
 

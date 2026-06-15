@@ -18,6 +18,7 @@ from archivecheck.credits.structure import heuristic_structure  # noqa: E402
 from archivecheck.report.cuesheet import build_cuesheet, write_cuesheet  # noqa: E402
 from archivecheck.audio.segment import Segment  # noqa: E402
 from archivecheck.audio.recognize import RecognitionResult, Track  # noqa: E402
+from archivecheck.audio.loudness import _parse_loudnorm_json, _evaluate  # noqa: E402
 
 passed = 0
 
@@ -33,6 +34,21 @@ def check(name, cond):
 
 def test_timecode():
     check("timecode formats", fmt_timecode(3661.5) == "01:01:01.500")
+
+
+def test_loudness_eval():
+    blob = (
+        'ffmpeg noise...\n{\n  "input_i" : "-23.00",\n  "input_tp" : "-2.00",\n'
+        '  "input_lra" : "7.00",\n  "input_thresh" : "-33.0"\n}\n'
+    )
+    d = _parse_loudnorm_json(blob)
+    check("loudnorm json parsed", d["input_i"] == "-23.00" and d["input_tp"] == "-2.00")
+
+    ok = _evaluate(-23.0, -2.0, 7.0)
+    check("compliant audio passes", ok.passed and ok.integrated_pass and ok.true_peak_pass and ok.lra_pass)
+    check("true-peak too hot fails", not _evaluate(-23.0, -0.5, 7.0).true_peak_pass)
+    check("lra too wide fails", not _evaluate(-23.0, -2.0, 20.0).lra_pass)
+    check("integrated off-target fails", not _evaluate(-20.0, -2.0, 7.0).integrated_pass)
 
 
 def test_slugify_safe():
@@ -113,6 +129,7 @@ def test_needs_check():
 
 if __name__ == "__main__":
     test_timecode()
+    test_loudness_eval()
     test_slugify_safe()
     test_heuristic_structure()
     test_dedup()

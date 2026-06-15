@@ -15,6 +15,9 @@ env/
 # Tool output (contains personal names — never commit)
 vc_output/
 
+# Local binaries fetched by install.ps1 (e.g. fpcalc)
+tools/
+
 # Local reference data with real personal names (PII) — keep out of the repo
 example/
 

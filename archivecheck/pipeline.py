@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from .audio.extract import extract_audio, probe
+from .audio.loudness import analyze_loudness
 from .audio.recognize import get_recognizer
 from .audio.segment import merge_adjacent, segment_audio, Segment
 from .config import CONFIG
@@ -20,6 +21,7 @@ from .credits.ocr import get_ocr_engine, ocr_frames
 from .credits.structure import structure_credits
 from .report.cuesheet import build_cuesheet, write_cuesheet
 from .report.credits_report import write_credits
+from .report.tech_report import write_tech_report
 from .util import fmt_timecode
 
 
@@ -38,6 +40,8 @@ class FilmSummary:
     warnings: List[str] = field(default_factory=list)
     music: dict = field(default_factory=dict)
     credits: dict = field(default_factory=dict)
+    loudness: dict = field(default_factory=dict)
+    fileinfo: dict = field(default_factory=dict)
 
 
 def process_video(
@@ -45,6 +49,7 @@ def process_video(
     out_dir: str,
     do_music: bool = True,
     do_credits: bool = True,
+    do_loudness: bool = True,
     credits_window_sec: Optional[float] = None,
     keep_intermediate: bool = False,
 ) -> FilmSummary:
@@ -141,6 +146,45 @@ def process_video(
         except Exception as e:
             summary.credits = {"ok": False, "error": repr(e)}
 
+    # ---- loudness (EBU R128) + technical report --------------------------- #
+    loudness_result = None
+    if do_loudness and info.has_audio:
+        try:
+            loudness_result = analyze_loudness(video_path)
+            if loudness_result.ok:
+                summary.loudness = {
+                    "ok": True,
+                    "integrated_lufs": loudness_result.integrated_lufs,
+                    "true_peak_dbtp": loudness_result.true_peak_dbtp,
+                    "lra_lu": loudness_result.lra_lu,
+                    "passed": loudness_result.passed,
+                    "reasons": loudness_result.reasons,
+                }
+                if not loudness_result.passed:
+                    summary.warnings.append(
+                        "Loudness not EBU R128 compliant: "
+                        + "; ".join(loudness_result.reasons)
+                    )
+            else:
+                summary.loudness = {"ok": False, "error": loudness_result.error}
+        except Exception as e:
+            summary.loudness = {"ok": False, "error": repr(e)}
+
+    # File info (reference only) + readable technical report (always written).
+    summary.fileinfo = {
+        "resolution": f"{info.width}x{info.height}" if info.width else None,
+        "fps": info.fps,
+        "video_codec": info.video_codec,
+        "container": info.container,
+        "audio_codec": info.audio_codec,
+        "audio_channels": info.audio_channels,
+        "audio_sample_rate": info.audio_sample_rate,
+    }
+    try:
+        write_tech_report(out_dir, info, loudness_result)
+    except Exception as e:
+        summary.warnings.append(f"Could not write technical report: {e!r}")
+
     # ---- persist summary -------------------------------------------------- #
     with open(os.path.join(out_dir, "summary.json"), "w", encoding="utf-8") as f:
         json.dump(_summary_dict(summary), f, indent=2)
@@ -158,5 +202,7 @@ def _summary_dict(s: FilmSummary) -> dict:
         "warnings": s.warnings,
         "music": s.music,
         "credits": s.credits,
+        "loudness": s.loudness,
+        "fileinfo": s.fileinfo,
         "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
