@@ -111,6 +111,10 @@ def llm_structure(lines: List[CreditLine]) -> Optional[List[CreditEntry]]:
         "max_tokens": 4096,
         "messages": [{"role": "user", "content": prompt + text}],
     }
+    # Deterministic structuring -> repeatable output. Opus/Fable reject the
+    # temperature param (400), so only send it on models that accept it.
+    if not any(m in CONFIG.anthropic_model.lower() for m in ("opus", "fable")):
+        payload["temperature"] = 0
     req = urllib.request.Request(
         ANTHROPIC_URL,
         data=json.dumps(payload).encode("utf-8"),
