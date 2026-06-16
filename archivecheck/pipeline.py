@@ -16,6 +16,7 @@ from .audio.recognize import get_recognizer
 from .audio.segment import merge_adjacent, segment_audio, Segment
 from .config import CONFIG
 from .credits.dedup import dedup_lines
+from .credits.detect import detect_credits_window
 from .credits.frames import credits_window, extract_credit_frames
 from .credits.ocr import get_ocr_engine, ocr_frames
 from .credits.structure import structure_credits
@@ -125,7 +126,20 @@ def process_video(
                 summary.credits = {"ok": False, "error": "tesseract not installed"}
                 summary.warnings.append("tesseract not installed; credits OCR skipped.")
             else:
-                start, end = credits_window(info.duration_sec, credits_window_sec)
+                # Window: explicit --credits-window wins; else auto-detect; else fixed.
+                if credits_window_sec is not None:
+                    start, end = credits_window(info.duration_sec, credits_window_sec)
+                    win_method = "manual"
+                elif CONFIG.auto_credits_window:
+                    det = detect_credits_window(video_path, info.duration_sec, engine)
+                    if det:
+                        start, end, win_method = det[0], det[1], "auto-detected"
+                    else:
+                        start, end = credits_window(info.duration_sec)
+                        win_method = "fallback (fixed window)"
+                else:
+                    start, end = credits_window(info.duration_sec)
+                    win_method = "fixed window"
                 frame_dir = os.path.join(work_dir, "credit_frames")
                 # Upscale low-res proxies toward ~1080p so credit text OCRs well.
                 upscale = 1
@@ -140,6 +154,7 @@ def process_video(
                 summary.credits = {
                     "ok": True,
                     "window_tc": f"{fmt_timecode(start)}-{fmt_timecode(end)}",
+                    "window_method": win_method,
                     "frames": len(frames),
                     "unique_lines": len(lines),
                     "entries": len(entries),
