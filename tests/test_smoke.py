@@ -14,7 +14,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from archivecheck.util import fmt_timecode, slugify  # noqa: E402
 from archivecheck.credits.dedup import dedup_lines, CreditLine  # noqa: E402
 from archivecheck.credits.ocr import OcrFrame  # noqa: E402
-from archivecheck.credits.structure import heuristic_structure, enforce_titles, CreditEntry  # noqa: E402
+from archivecheck.credits.structure import (  # noqa: E402
+    heuristic_structure, enforce_titles, split_combined_roles, CreditEntry)
 from archivecheck.credits.titles import map_role, load_titles  # noqa: E402
 from archivecheck.report.cuesheet import build_cuesheet, write_cuesheet  # noqa: E402
 from archivecheck.audio.segment import Segment  # noqa: E402
@@ -123,6 +124,15 @@ def test_title_mapping():
     check("role mapped to swedish title", entries[0].role == "Statist")
     check("original role kept", entries[0].original_role == "Statister")
     check("unmappable flagged", entries[1].needs_check and entries[1].role == "Blergh")
+
+    # combined role -> one row per role, same name, original kept
+    combined = enforce_titles(split_combined_roles(
+        [CreditEntry(role="A-foto & Klipp", name="Jonas Stenholm")]))
+    roles = {(e.role, e.name, e.original_role) for e in combined}
+    check("combined role split into two", len(combined) == 2)
+    check("split keeps both roles + original",
+          ("A-foto", "Jonas Stenholm", "A-foto & Klipp") in roles
+          and ("Klipp", "Jonas Stenholm", "A-foto & Klipp") in roles)
 
 
 def test_dedup():

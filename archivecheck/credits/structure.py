@@ -86,6 +86,10 @@ _PROMPT = (
     "- \"role\": map original_role to the SINGLE closest title from the CONTROLLED "
     "TITLE LIST below and output that title VERBATIM. If none is a great match, pick "
     "the closest anyway. NEVER output a title that is not in the list.\n"
+    "If one credit gives a person SEVERAL roles joined by '&', 'och', '+', or '/' "
+    "(e.g. 'A-Foto & Klipp', 'Manus & Regi', 'A-Ljud & Musik'), output a SEPARATE "
+    "object for EACH role — all with the same name — mapping each to its own title; "
+    "set original_role to the combined text exactly as written.\n"
     "For cast lines that pair a character with an actor (e.g. 'Charlotta  Petra "
     "Sundqvist'), put the character in original_role, map role to the actor title "
     "(e.g. 'Skådespelare / Actor', or 'Statist / Extra' for extras), and put ONLY "
@@ -164,9 +168,32 @@ def enforce_titles(entries: List[CreditEntry]) -> List[CreditEntry]:
     return entries
 
 
+_COMBINER_RE = re.compile(r"\s*(?:&|\boch\b|\+)\s*", re.IGNORECASE)
+
+
+def split_combined_roles(entries: List[CreditEntry]) -> List[CreditEntry]:
+    """Split a person credited under a combined role into one entry per role.
+
+    e.g. 'A-foto & Klipp' -> two entries (same name), so each role is a separate
+    database row. ``original_role`` keeps the combined text for verification.
+    """
+    out: List[CreditEntry] = []
+    for e in entries:
+        parts = [p.strip() for p in _COMBINER_RE.split(e.role)] if e.role else []
+        parts = [p for p in parts if p]
+        if len(parts) > 1:
+            for p in parts:
+                out.append(CreditEntry(role=p, name=e.name, timestamp=e.timestamp,
+                                       method=e.method, original_role=e.role))
+        else:
+            out.append(e)
+    return out
+
+
 def structure_credits(lines: List[CreditLine]) -> tuple[List[CreditEntry], str]:
-    """Return (entries, method_used). Roles are mapped to legit titles."""
+    """Return (entries, method_used). Roles are mapped to legit titles, and a
+    person credited under a combined role gets one row per role."""
     llm = llm_structure(lines)
     if llm is not None:
-        return enforce_titles(llm), "llm"
-    return enforce_titles(heuristic_structure(lines)), "heuristic"
+        return enforce_titles(llm), "llm"   # the LLM splits combined roles itself
+    return enforce_titles(split_combined_roles(heuristic_structure(lines))), "heuristic"
