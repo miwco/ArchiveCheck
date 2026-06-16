@@ -102,7 +102,9 @@ class Config:
 
     # How far from the end we assume credits live, when not auto-detecting.
     credits_window_sec: float = 180.0
-    credits_fps: float = 2.0                # frames per second sampled in window
+    # Frames/sec sampled in the credits window. Higher catches more of a fast
+    # scroll; affordable because auto-detection keeps the window small.
+    credits_fps: float = 4.0
     # Upscale credit frames toward this height before OCR. Low-res proxies (e.g.
     # 360p) OCR very poorly at native size; upscaling to ~1080p is a large win.
     credits_target_height: int = 1080
