@@ -36,7 +36,8 @@ def _print_summary(s: FilmSummary) -> None:
     if s.credits:
         if s.credits.get("ok"):
             print(f"  credits: {s.credits['entries']} entries "
-                  f"({s.credits['structuring']}, {s.credits['frames']} frames)")
+                  f"({s.credits['structuring']}, {s.credits['frames']} frames, "
+                  f"window {s.credits.get('window_tc','')} {s.credits.get('window_method','')})")
         else:
             print(f"  credits: FAILED - {s.credits.get('error')}")
     if s.loudness:
@@ -61,7 +62,8 @@ def main(argv: List[str] | None = None) -> int:
     parser.add_argument("--no-credits", action="store_true", help="skip credits extraction")
     parser.add_argument("--no-loudness", action="store_true", help="skip EBU R128 loudness check")
     parser.add_argument("--credits-window", type=float,
-                        help="seconds from the end to scan for credits")
+                        help="force a fixed credits window of N seconds from the end "
+                             "(default: auto-detect where the credits start)")
     parser.add_argument("--keep-intermediate", action="store_true",
                         help="keep extracted audio/frames for debugging")
     parser.add_argument("--check", action="store_true",

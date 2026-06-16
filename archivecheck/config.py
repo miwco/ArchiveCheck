@@ -89,6 +89,17 @@ class Config:
     min_recognition_score: float = 0.5
 
     # --- credits tunables --------------------------------------------------- #
+    # Auto-detect where the credits start (cheap native-res OCR scan), so the
+    # dense OCR pass only covers the credits. Disabled when --credits-window is
+    # given. Falls back to the fixed window below if detection is inconclusive.
+    auto_credits_window: bool = True
+    credits_search_sec: float = 300.0       # how far back to scan for the credits
+    credits_detect_step: float = 3.0        # scan one frame every N seconds
+    credits_detect_gap: float = 12.0        # bridge text gaps up to N sec
+    credits_detect_margin: float = 5.0      # start the window N sec before 1st text
+    credits_min_text_frames: int = 2        # need >= this many text frames
+    credits_detect_tail_tol: float = 45.0   # last text must be within N sec of end
+
     # How far from the end we assume credits live, when not auto-detecting.
     credits_window_sec: float = 180.0
     credits_fps: float = 2.0                # frames per second sampled in window

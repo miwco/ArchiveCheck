@@ -135,6 +135,23 @@ def test_title_mapping():
           and ("Klipp", "Jonas Stenholm", "A-foto & Klipp") in roles)
 
 
+def test_credits_detect():
+    from archivecheck.credits.detect import _credits_start_from_flags as f
+    dur = 300.0
+    kw = dict(gap=12.0, margin=5.0, min_text_frames=2, tail_tol=45.0)
+    # footage (False) until 264, then credits text to the end
+    s = [(t, t >= 264) for t in range(0, 300, 3)]
+    start = f(s, dur, **kw)
+    check("detects credits start", start is not None and abs(start - 259.0) < 0.01)
+    # a 1-sample gap inside the credits is bridged
+    s2 = [(t, t >= 264 and t != 276) for t in range(0, 300, 3)]
+    check("bridges gap in credits", abs(f(s2, dur, **kw) - 259.0) < 0.01)
+    check("no text -> None", f([(t, False) for t in range(0, 300, 3)], dur, **kw) is None)
+    # text only mid-film, nothing near the end -> not credits
+    s3 = [(t, 60 <= t <= 66) for t in range(0, 300, 3)]
+    check("text far from end -> None", f(s3, dur, **kw) is None)
+
+
 def test_dedup():
     frames = [
         OcrFrame(0.0, ["Director Jane Doe"]),
@@ -204,6 +221,7 @@ if __name__ == "__main__":
     test_slugify_safe()
     test_heuristic_structure()
     test_title_mapping()
+    test_credits_detect()
     test_dedup()
     test_cue_merge()
     test_needs_check()
