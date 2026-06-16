@@ -13,7 +13,7 @@
 
 
 # ── Regi / Directing ─────────────────────────────────────────────────────────
-Andra regiassistent / Second Assistent Director (SAD)
+Andra regiassistent / Second Assistant Director (SAD)
 Andra team regissör / Second Unit Director
 Första regiassistent / First Assistant Director (FAD)
 Regissör / Director
@@ -48,9 +48,9 @@ B-foto / First Assistant Camera (Focus Puller)
 C-foto / Second Assistant Camera (Clapper Loader)
 Chefselektriker / Gaffer
 Chefspassare / Key Grip
-Digital Imagining Technician (DIT) / Digital Imagining Technician (DIT)
+Digital Imagining Technician (DIT) / Digital Imaging Technician (DIT)
 Drönar operatör / Drone Operator
-Elassistent / Best Boy/girl
+Elassistent / Best Boy/Girl
 Kamera / Camera Operator
 Kameraassistent / Assistant Camera
 Kran operatör / Crane Operator
@@ -58,7 +58,7 @@ Ljusassistent / Lighting Assistant
 Ljussättare / Lighting Technician
 Passarassistent / Grip Best Boy/Girl
 Passare / Grip
-Stedicam operatör / Stedicam Operator
+Stedicam operatör / Steadicam Operator
 Stillfotograf / Still Photography
 Undervattensfotograf / Underwater Photography
 Video operatör / Video Operator
@@ -104,11 +104,11 @@ Pyroteknik / Pyrotechnics
 Specialeffekter / Special Effects
 Specialeffekts assistent / Special Effects Assistant
 Specialeffektskoordinator / Special Effects Coordinator
-Specialeffektstekniker / Special Effects Technichian
+Specialeffektstekniker / Special Effects Technician
 
 # ── Scenografi & rekvisita / Art department & props ──────────────────────────
 Attributör / Property Master
-Attributör assistent / Assistent Property Master
+Attributör assistent / Assistant Property Master
 Målare / Painter
 Rekvisita / Props
 Rekvisita tillverkning / Props Builder
@@ -176,14 +176,14 @@ Tack till / Thanks
 Arbetsgrupp / Team
 Assistent / Assistant
 Catering / Catering
-Dramaturg / Dramturgy
+Dramaturg / Dramaturgy
 Handledare / Supervisor
 Idé / Idea
 Inspelningsassistent / Runner
 Intimitetsstödperson / Intimacy support person
 Koncept / Concept
 Konsultation / Consultation
-Koreografi / Coreography
+Koreografi / Choreography
 Marknadsföring / Marketing
 Mentor / Mentor
 Research / Research
