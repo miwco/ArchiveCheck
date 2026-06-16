@@ -167,7 +167,11 @@ def test_cue_merge():
     check("cue spans the region", abs(cues[0].start) < 0.01 and abs(cues[0].end - 40.0) < 0.01)
     check("cue carries metadata", cues[0].title == "Test Song" and cues[0].isrc == "USXXX0000001")
     out = write_cuesheet(cues, tempfile.mkdtemp())
-    check("cuesheet writes csv+xlsx", len(out) == 2)
+    check("cuesheet writes txt+csv(+xlsx)", len(out) >= 2 and any(p.endswith(".txt") for p in out))
+    txt = next(p for p in out if p.endswith(".txt"))
+    body = open(txt, encoding="utf-8").read()
+    check("music txt has the 12 fields", "Stycket börjar" in body and "Musiklicens" in body
+          and "Har Arcada alla rättigheter till stycket?" in body)
 
 
 def test_needs_check():

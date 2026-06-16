@@ -97,7 +97,8 @@ full download is needed.
 Options: `--no-music`, `--no-credits`, `--no-loudness`, `--credits-window <sec>`
 (how far from the end to scan, default 180), `--keep-intermediate`.
 
-Per-film output folder contains `music_cuesheet.{csv,xlsx}`, `credits.{txt,csv,xlsx}`,
+Per-film output folder contains `music_cuesheet.{txt,csv,xlsx}` (the `.txt` is a
+readable per-Musikstycke block for quick checking), `credits.{txt,csv,xlsx}`,
 `technical_report.txt` (loudness + file info), and `summary.json`. Batch runs also
 write `index.csv` / `index.json`.
 
