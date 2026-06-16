@@ -36,6 +36,7 @@ class StageResult:
 @dataclass
 class FilmSummary:
     video: str
+    label: str = ""                  # output-folder name / film id
     duration_tc: str = ""
     warnings: List[str] = field(default_factory=list)
     music: dict = field(default_factory=dict)
@@ -204,6 +205,7 @@ def process_video(
 def _summary_dict(s: FilmSummary) -> dict:
     return {
         "video": s.video,
+        "label": s.label,
         "duration_tc": s.duration_tc,
         "warnings": s.warnings,
         "music": s.music,

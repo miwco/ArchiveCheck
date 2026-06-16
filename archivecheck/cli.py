@@ -108,6 +108,7 @@ def main(argv: List[str] | None = None) -> int:
             credits_window_sec=args.credits_window,
             keep_intermediate=args.keep_intermediate,
         )
+        summary.label = label
         _print_summary(summary)
         summaries.append(summary)
 
@@ -122,7 +123,7 @@ def _write_index(out_root: str, summaries: List[FilmSummary]) -> None:
     rows = []
     for s in summaries:
         rows.append({
-            "video": os.path.basename(s.video),
+            "film": s.label or os.path.basename(s.video),
             "duration": s.duration_tc,
             "music_recognized": s.music.get("recognized", "") if s.music else "",
             "music_unidentified": s.music.get("unidentified", "") if s.music else "",
@@ -136,6 +137,7 @@ def _write_index(out_root: str, summaries: List[FilmSummary]) -> None:
             "fps": s.fileinfo.get("fps", "") if s.fileinfo else "",
             "video_codec": s.fileinfo.get("video_codec", "") if s.fileinfo else "",
             "warnings": "; ".join(s.warnings),
+            "source": s.video,
         })
     with open(os.path.join(out_root, "index.csv"), "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
