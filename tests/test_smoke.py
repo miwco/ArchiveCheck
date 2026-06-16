@@ -120,7 +120,7 @@ def test_title_mapping():
         CreditEntry(role="Blergh", name="Nobody"),
     ]
     enforce_titles(entries)
-    check("role mapped to canonical", entries[0].role == "Statist / Extra")
+    check("role mapped to swedish title", entries[0].role == "Statist")
     check("original role kept", entries[0].original_role == "Statister")
     check("unmappable flagged", entries[1].needs_check and entries[1].role == "Blergh")
 

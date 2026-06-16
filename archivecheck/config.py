@@ -140,6 +140,9 @@ class Config:
     ))
     # Min fuzzy ratio (0..1) to accept a non-exact role -> title match.
     title_match_cutoff: float = 0.84
+    # Output the Swedish side of a title only (e.g. "A-foto") in the Roll column.
+    # Set True to output the full "Svenska / English" string instead.
+    bilingual_roles: bool = False
 
     # --- output ------------------------------------------------------------- #
     output_root: Optional[str] = field(default_factory=lambda: os.environ.get("VC_OUTPUT_ROOT"))

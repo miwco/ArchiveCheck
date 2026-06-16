@@ -50,6 +50,11 @@ def _lookup() -> dict[str, str]:
     return lut
 
 
+def swedish_title(title: str) -> str:
+    """Return the Swedish side of a 'Svenska / English' title (left of ' / ')."""
+    return title.split(" / ", 1)[0].strip()
+
+
 def map_role(role: str) -> Optional[str]:
     """Return the canonical title for a raw role, or None if no confident match.
 

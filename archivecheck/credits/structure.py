@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from .dedup import CreditLine
-from .titles import load_titles, map_role
+from .titles import load_titles, map_role, swedish_title
 from ..config import CONFIG
 
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
@@ -157,7 +157,7 @@ def enforce_titles(entries: List[CreditEntry]) -> List[CreditEntry]:
         e.original_role = original
         canon = map_role(e.role) or (map_role(original) if original != e.role else None)
         if canon:
-            e.role = canon
+            e.role = canon if CONFIG.bilingual_roles else swedish_title(canon)
         elif e.role or original:
             e.needs_check = True
             e.check_reason = "Roll saknas i titellistan – kontrollera"

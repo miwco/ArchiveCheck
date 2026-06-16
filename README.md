@@ -125,7 +125,9 @@ proxy, so its codec and container legitimately differ from the master.
 Columns use the archive's Swedish field names so output maps 1:1 onto a record and
 is easy to check or import. CSVs are written UTF-8-with-BOM so Excel renders å/ä/ö.
 
-**`credits.*` → SLUTTEXTER (ALLA):** `Roll` (canonical archive title), `Namn`,
+**`credits.*` → SLUTTEXTER (ALLA):** `Roll` (the Swedish archive title, e.g.
+`A-foto`; set `CONFIG.bilingual_roles = True` to output the full `Svenska /
+English` form instead), `Namn`,
 `Roll (original)` (the credit's own wording, for verification), `Kontrolleras`
 (`Ja` when the role could not be mapped), and `Tidskod`. Every role is mapped onto
 the **controlled title list** in `end_credits_titles.txt` (one title per line,
