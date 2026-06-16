@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from .dedup import CreditLine
+from .titles import load_titles, map_role, swedish_title
 from ..config import CONFIG
 
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
@@ -25,6 +26,9 @@ class CreditEntry:
     name: str
     timestamp: Optional[float] = None
     method: str = "heuristic"
+    original_role: str = ""          # role text as written in the credits
+    needs_check: bool = False        # role could not be mapped to a legit title
+    check_reason: str = ""
 
 
 _SEP_RE = re.compile(r"\s*(?::|–|—| - |\t|\s{2,})\s*")
@@ -38,6 +42,15 @@ def _looks_like_role_header(text: str) -> bool:
     return upper / len(letters) > 0.8 and len(text) <= 40
 
 
+def _known_role(text: str) -> Optional[str]:
+    """Return the canonical archive role if ``text`` matches one (case-insensitive)."""
+    t = text.strip().lower()
+    for role in CONFIG.archive_roles:
+        if t == role.lower():
+            return role
+    return None
+
+
 def heuristic_structure(lines: List[CreditLine]) -> List[CreditEntry]:
     entries: List[CreditEntry] = []
     current_role: Optional[str] = None
@@ -48,6 +61,8 @@ def heuristic_structure(lines: List[CreditLine]) -> List[CreditEntry]:
             role, name = parts[0].strip(), parts[1].strip()
             entries.append(CreditEntry(role=role, name=name, timestamp=cl.timestamp))
             current_role = role
+        elif _known_role(text):
+            current_role = _known_role(text)
         elif _looks_like_role_header(text):
             current_role = text.title()
         elif current_role:
@@ -59,13 +74,29 @@ def heuristic_structure(lines: List[CreditLine]) -> List[CreditEntry]:
 
 _PROMPT = (
     "You are parsing OCR text from a film's end credits (likely Swedish). The lines "
-    "are in order but may contain OCR errors. Extract every role -> person mapping. "
-    "Return ONLY a JSON array of objects with keys \"role\" and \"name\". If a single "
-    "role has several people, emit one object per person. Skip titles, logos, "
-    "copyright notices, and song/music license blocks (those are handled elsewhere). "
-    "Do not invent entries.\n"
-    "When a role clearly corresponds to one of these archive role names, use that "
-    "EXACT spelling; otherwise keep the credit's own wording: {roles}.\n\n"
+    "are in order but may contain OCR errors. Extract every role -> person mapping.\n"
+    "Return ONLY a JSON array of objects with keys \"role\", \"name\", and "
+    "\"original_role\":\n"
+    "- \"name\": the person's name in normal capitalization 'Firstname Lastname' "
+    "(fix all-caps/garbled casing; preserve particles/intercaps like 'von Essen', "
+    "'af Hällström', 'McKay'). Emit one object per person; if a role lists several "
+    "people, repeat the role once per person.\n"
+    "- \"original_role\": the role text exactly as written in the credits (only "
+    "correct obvious OCR errors).\n"
+    "- \"role\": map original_role to the SINGLE closest title from the CONTROLLED "
+    "TITLE LIST below and output that title VERBATIM. If none is a great match, pick "
+    "the closest anyway. NEVER output a title that is not in the list.\n"
+    "If one credit gives a person SEVERAL roles joined by '&', 'och', '+', or '/' "
+    "(e.g. 'A-Foto & Klipp', 'Manus & Regi', 'A-Ljud & Musik'), output a SEPARATE "
+    "object for EACH role — all with the same name — mapping each to its own title; "
+    "set original_role to the combined text exactly as written.\n"
+    "For cast lines that pair a character with an actor (e.g. 'Charlotta  Petra "
+    "Sundqvist'), put the character in original_role, map role to the actor title "
+    "(e.g. 'Skådespelare / Actor', or 'Statist / Extra' for extras), and put ONLY "
+    "the actor's real name in \"name\".\n"
+    "Skip section headers with no person, logos, copyright notices, and song/music "
+    "license blocks (handled elsewhere). Do not invent entries.\n\n"
+    "CONTROLLED TITLE LIST (output 'role' verbatim from here):\n{titles}\n\n"
     "CREDITS TEXT:\n"
 )
 
@@ -74,12 +105,16 @@ def llm_structure(lines: List[CreditLine]) -> Optional[List[CreditEntry]]:
     if not CONFIG.anthropic_api_key:
         return None
     text = "\n".join(cl.text for cl in lines)
-    prompt = _PROMPT.format(roles=", ".join(CONFIG.archive_roles))
+    prompt = _PROMPT.format(titles="\n".join(load_titles()))
     payload = {
         "model": CONFIG.anthropic_model,
         "max_tokens": 4096,
         "messages": [{"role": "user", "content": prompt + text}],
     }
+    # Deterministic structuring -> repeatable output. Opus/Fable reject the
+    # temperature param (400), so only send it on models that accept it.
+    if not any(m in CONFIG.anthropic_model.lower() for m in ("opus", "fable")):
+        payload["temperature"] = 0
     req = urllib.request.Request(
         ANTHROPIC_URL,
         data=json.dumps(payload).encode("utf-8"),
@@ -102,6 +137,7 @@ def llm_structure(lines: List[CreditLine]) -> Optional[List[CreditEntry]]:
         return [
             CreditEntry(role=str(o.get("role", "")).strip(),
                         name=str(o.get("name", "")).strip(),
+                        original_role=str(o.get("original_role", "")).strip(),
                         method="llm")
             for o in parsed
             if o.get("name")
@@ -118,9 +154,50 @@ def _extract_json_array(body: str) -> str:
     return body
 
 
+def enforce_titles(entries: List[CreditEntry]) -> List[CreditEntry]:
+    """Map every entry's role onto a legit title; flag ones that don't map.
+
+    Keeps the credit's wording in ``original_role`` and overwrites ``role`` with
+    the canonical title so the database only ever sees approved titles.
+    """
+    for e in entries:
+        original = e.original_role or e.role
+        e.original_role = original
+        canon = map_role(e.role) or (map_role(original) if original != e.role else None)
+        if canon:
+            e.role = canon if CONFIG.bilingual_roles else swedish_title(canon)
+        elif e.role or original:
+            e.needs_check = True
+            e.check_reason = "Roll saknas i titellistan – kontrollera"
+    return entries
+
+
+_COMBINER_RE = re.compile(r"\s*(?:&|\boch\b|\+)\s*", re.IGNORECASE)
+
+
+def split_combined_roles(entries: List[CreditEntry]) -> List[CreditEntry]:
+    """Split a person credited under a combined role into one entry per role.
+
+    e.g. 'A-foto & Klipp' -> two entries (same name), so each role is a separate
+    database row. ``original_role`` keeps the combined text for verification.
+    """
+    out: List[CreditEntry] = []
+    for e in entries:
+        parts = [p.strip() for p in _COMBINER_RE.split(e.role)] if e.role else []
+        parts = [p for p in parts if p]
+        if len(parts) > 1:
+            for p in parts:
+                out.append(CreditEntry(role=p, name=e.name, timestamp=e.timestamp,
+                                       method=e.method, original_role=e.role))
+        else:
+            out.append(e)
+    return out
+
+
 def structure_credits(lines: List[CreditLine]) -> tuple[List[CreditEntry], str]:
-    """Return (entries, method_used)."""
+    """Return (entries, method_used). Roles are mapped to legit titles, and a
+    person credited under a combined role gets one row per role."""
     llm = llm_structure(lines)
     if llm is not None:
-        return llm, "llm"
-    return heuristic_structure(lines), "heuristic"
+        return enforce_titles(llm), "llm"   # the LLM splits combined roles itself
+    return enforce_titles(split_combined_roles(heuristic_structure(lines))), "heuristic"

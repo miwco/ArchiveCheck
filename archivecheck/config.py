@@ -91,7 +91,17 @@ class Config:
     # --- credits tunables --------------------------------------------------- #
     # How far from the end we assume credits live, when not auto-detecting.
     credits_window_sec: float = 180.0
-    credits_fps: float = 1.0                # frames per second sampled in window
+    credits_fps: float = 2.0                # frames per second sampled in window
+    # Upscale credit frames toward this height before OCR. Low-res proxies (e.g.
+    # 360p) OCR very poorly at native size; upscaling to ~1080p is a large win.
+    credits_target_height: int = 1080
+    # OCR languages (Tesseract). swe+eng fixes Swedish diacritics (å/ä/ö); falls
+    # back to whatever subset is actually installed.
+    ocr_lang: str = "swe+eng"
+    # Drop OCR lines below this mean Tesseract confidence (0..100). The credits
+    # window may include live footage before the credits roll; junk OCR from
+    # footage scores low, real credit text scores high.
+    ocr_min_confidence: float = 55.0
     # Fuzzy-match ratio (0..100) above which two OCR lines are "the same line".
     dedup_similarity: int = 88
     min_resolution_warn: int = 720          # warn if proxy height below this
@@ -102,8 +112,12 @@ class Config:
     lra_max_lu: float = 15.0                # max loudness range (variation)
     true_peak_max_dbtp: float = -1.0        # max true peak
 
-    # Model used for credit structuring (Anthropic).
-    anthropic_model: str = "claude-opus-4-8"
+    # Model used for credit structuring (Anthropic). Defaults to the cheap, fast
+    # Haiku — credit cleanup is a light text task (~1 cent/film). Override with
+    # ANTHROPIC_MODEL in .env (e.g. claude-opus-4-8 for maximum quality).
+    anthropic_model: str = field(
+        default_factory=lambda: os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5")
+    )
 
     # Controlled role vocabulary from the Arcada archive (SLUTTEXTER). When a
     # credit clearly matches one of these, the LLM normalises to this exact
@@ -113,8 +127,22 @@ class Config:
         "A-foto", "B-foto", "Editerare", "Intervju", "Intervjuobjekt",
         "Ljud", "Manus&Regi", "Producent", "Regi", "Manus", "Klippning",
         "Foto", "Ljussättning", "Scenografi", "Mask", "Kostym", "Musik",
-        "Skådespelare", "Roll", "Tack till",
+        "Skådespelare", "Roll", "Tack till", "Statister", "Scripta",
+        "Stillfotograf", "Stuntman", "Gaffer", "Ljusassistent", "Klippning",
     )
+
+    # Controlled vocabulary of legit credit titles (one per line). Roles from the
+    # film's credits are mapped onto this list so the database only gets approved
+    # titles. Edit the file to update; falls back to archive_roles if missing.
+    titles_file: Optional[str] = field(default_factory=lambda: (
+        os.environ.get("VC_TITLES_FILE")
+        or str(Path(__file__).resolve().parent.parent / "end_credits_titles.txt")
+    ))
+    # Min fuzzy ratio (0..1) to accept a non-exact role -> title match.
+    title_match_cutoff: float = 0.84
+    # Output the Swedish side of a title only (e.g. "A-foto") in the Roll column.
+    # Set True to output the full "Svenska / English" string instead.
+    bilingual_roles: bool = False
 
     # --- output ------------------------------------------------------------- #
     output_root: Optional[str] = field(default_factory=lambda: os.environ.get("VC_OUTPUT_ROOT"))

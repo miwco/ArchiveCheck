@@ -17,22 +17,9 @@ from pathlib import Path
 from typing import List
 
 from .config import CONFIG
+from .input_source import gather_inputs, is_url, resolve_stream
 from .pipeline import process_video, FilmSummary, _summary_dict
 from .util import slugify
-
-VIDEO_EXTS = {".mp4", ".mov", ".mkv", ".avi", ".m4v", ".mxf", ".webm", ".wmv"}
-
-
-def _gather(path: str) -> List[str]:
-    p = Path(path)
-    if p.is_file():
-        return [str(p)]
-    if p.is_dir():
-        return sorted(
-            str(f) for f in p.iterdir()
-            if f.is_file() and f.suffix.lower() in VIDEO_EXTS
-        )
-    raise FileNotFoundError(path)
 
 
 def _print_summary(s: FilmSummary) -> None:
@@ -67,7 +54,8 @@ def _print_summary(s: FilmSummary) -> None:
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="archivecheck",
                                      description="Music cue sheet + end-credits extractor.")
-    parser.add_argument("input", nargs="?", help="video file or folder of videos")
+    parser.add_argument("inputs", nargs="*",
+                        help="one or more video files, folders, URLs, or a links .txt file")
     parser.add_argument("-o", "--output", help="output root (default: ./vc_output)")
     parser.add_argument("--no-music", action="store_true", help="skip music analysis")
     parser.add_argument("--no-credits", action="store_true", help="skip credits extraction")
@@ -83,34 +71,44 @@ def main(argv: List[str] | None = None) -> int:
     if args.check:
         return _check()
 
-    if not args.input:
-        parser.error("the following arguments are required: input")
+    if not args.inputs:
+        parser.error("the following arguments are required: inputs")
 
-    try:
-        videos = _gather(args.input)
-    except FileNotFoundError:
-        print(f"Input not found: {args.input}", file=sys.stderr)
-        return 2
-    if not videos:
-        print("No video files found.", file=sys.stderr)
+    inputs: List[tuple] = []
+    for arg in args.inputs:
+        try:
+            inputs.extend(gather_inputs(arg))
+        except FileNotFoundError:
+            print(f"Input not found: {arg}", file=sys.stderr)
+            return 2
+    if not inputs:
+        print("No videos found.", file=sys.stderr)
         return 2
 
     out_root = args.output or CONFIG.output_root or os.path.join(os.getcwd(), "vc_output")
     Path(out_root).mkdir(parents=True, exist_ok=True)
 
     summaries: List[FilmSummary] = []
-    for video in videos:
-        name = slugify(Path(video).stem)
-        out_dir = os.path.join(out_root, name)
-        print(f"\n== {Path(video).name} ==")
+    for label, source in inputs:
+        print(f"\n== {label} ==")
+        # Resolve player-page URLs to a playable stream; skip on failure so one
+        # bad link doesn't abort the batch.
+        if is_url(source):
+            try:
+                source = resolve_stream(source)
+            except Exception as e:
+                print(f"  ! could not resolve URL: {e}")
+                continue
+        out_dir = os.path.join(out_root, slugify(label))
         summary = process_video(
-            video, out_dir,
+            source, out_dir,
             do_music=not args.no_music,
             do_credits=not args.no_credits,
             do_loudness=not args.no_loudness,
             credits_window_sec=args.credits_window,
             keep_intermediate=args.keep_intermediate,
         )
+        summary.label = label
         _print_summary(summary)
         summaries.append(summary)
 
@@ -125,7 +123,7 @@ def _write_index(out_root: str, summaries: List[FilmSummary]) -> None:
     rows = []
     for s in summaries:
         rows.append({
-            "video": os.path.basename(s.video),
+            "film": s.label or os.path.basename(s.video),
             "duration": s.duration_tc,
             "music_recognized": s.music.get("recognized", "") if s.music else "",
             "music_unidentified": s.music.get("unidentified", "") if s.music else "",
@@ -139,6 +137,7 @@ def _write_index(out_root: str, summaries: List[FilmSummary]) -> None:
             "fps": s.fileinfo.get("fps", "") if s.fileinfo else "",
             "video_codec": s.fileinfo.get("video_codec", "") if s.fileinfo else "",
             "warnings": "; ".join(s.warnings),
+            "source": s.video,
         })
     with open(os.path.join(out_root, "index.csv"), "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))

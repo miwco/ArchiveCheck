@@ -215,11 +215,43 @@ def _row(c: Cue, index: int) -> dict:
     }
 
 
+# The 12 fields shown per piece in the readable TXT (the archive's MUSIKINFORMATION
+# block). Order and labels match the Arcada archive exactly.
+_TXT_FIELDS = [
+    "Namn", "Stycket börjar", "Stycket slutar", "Längd", "Kompositör",
+    "Instrumental", "Textförfattare", "Arrangör", "Artist", "Musiktyp",
+    "Har Arcada alla rättigheter till stycket?", "Musiklicens",
+]
+
+
+def _txt(rows: List[dict]) -> str:
+    """Readable MUSIKINFORMATION report, one block per Musikstycke."""
+    pad = max(len(f) for f in _TXT_FIELDS)
+    out = ["MUSIKINFORMATION", "=" * 16, ""]
+    if not rows:
+        out.append("(inga musikstycken hittades)")
+        return "\n".join(out) + "\n"
+    for r in rows:
+        flags = [str(r["Status"])]
+        if r["Kontrolleras"]:
+            flags.append("kontrolleras")
+        out.append(f"MUSIKSTYCKE {r['Musikstycke']}   [{', '.join(flags)}]")
+        for field_name in _TXT_FIELDS:
+            out.append(f"  {field_name.ljust(pad)} : {r[field_name]}")
+        out.append("")
+    return "\n".join(out) + "\n"
+
+
 def write_cuesheet(cues: List[Cue], out_dir: str, basename: str = "music_cuesheet") -> List[str]:
-    """Write CSV (always) and XLSX (if openpyxl available). Returns paths."""
+    """Write CSV + readable TXT (always) and XLSX (if openpyxl). Returns paths."""
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     rows = [_row(c, i) for i, c in enumerate(cues, start=1)]
     written: List[str] = []
+
+    txt_path = os.path.join(out_dir, f"{basename}.txt")
+    with open(txt_path, "w", encoding="utf-8") as f:
+        f.write(_txt(rows))
+    written.append(txt_path)
 
     csv_path = os.path.join(out_dir, f"{basename}.csv")
     # utf-8-sig so Excel on Windows renders Swedish characters (å/ä/ö) correctly.
