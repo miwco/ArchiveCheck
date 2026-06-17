@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ArchiveCheck</title>
+  {% block head %}{% endblock %}
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <a class="brand" href="/">ArchiveCheck</a>
+    <form action="/logout" method="post" class="logout"><button type="submit">Log out</button></form>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  <footer>Arcada film archive · music cue sheet · end credits · loudness</footer>
+</body>
+</html>

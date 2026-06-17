@@ -1,0 +1,15 @@
+.git
+.venv
+venv
+__pycache__
+*.pyc
+web_data/
+output/
+vc_output*/
+testvideos/
+tools/
+tessdata/
+example/
+samples/
+.env
+*.sqlite3

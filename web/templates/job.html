@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block head %}
+  {% if status in ("queued", "running") %}<meta http-equiv="refresh" content="3">{% endif %}
+{% endblock %}
+{% block content %}
+
+{% if not_found %}
+  <section class="card narrow"><h1>Not found</h1>
+    <p class="muted">That analysis doesn't exist or isn't yours.</p>
+    <a class="primary button" href="/">Back</a></section>
+
+{% elif status in ("queued", "running") %}
+  <section class="card narrow center">
+    <h1>Analysing…</h1>
+    <div class="spinner"></div>
+    <p class="muted">{{ "Waiting in queue…" if status == "queued" else "Processing — music, credits and loudness. This can take a few minutes." }}</p>
+    <p class="muted small">This page refreshes automatically.</p>
+  </section>
+
+{% elif status == "error" %}
+  <section class="card narrow"><h1>Analysis failed</h1>
+    <p class="error">Something went wrong while processing this film.</p>
+    <pre class="muted small">{{ job["error"] }}</pre>
+    <a class="primary button" href="/">Try another film</a></section>
+
+{% else %}
+  <section class="card">
+    <h1>Results</h1>
+    {% if cache_hit %}<p class="muted small">Served from cache (already analysed).</p>{% endif %}
+
+    {# Loudness #}
+    {% set L = summary.get("loudness") or {} %}
+    {% if L.get("ok") %}
+      <h2>Loudness (EBU R128)
+        <span class="badge {{ 'pass' if L.passed else 'fail' }}">{{ "PASS" if L.passed else "FAIL" }}</span>
+      </h2>
+      <p>Integrated <strong>{{ "%.1f"|format(L.integrated_lufs) }} LUFS</strong> ·
+         True peak <strong>{{ "%.1f"|format(L.true_peak_dbtp) }} dBTP</strong> ·
+         Range (LRA) <strong>{{ "%.1f"|format(L.lra_lu) }} LU</strong></p>
+      {% if L.reasons %}<ul class="muted small">{% for r in L.reasons %}<li>{{ r }}</li>{% endfor %}</ul>{% endif %}
+    {% endif %}
+
+    {# Music #}
+    <h2>Music ({{ music|length }} piece{{ '' if music|length == 1 else 's' }})</h2>
+    {% if music %}
+    <table>
+      <thead><tr><th>#</th><th>Namn</th><th>Börjar</th><th>Slutar</th><th>Längd</th><th>Artist</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for m in music %}
+        <tr>
+          <td>{{ m["Musikstycke"] }}</td><td>{{ m["Namn"] }}</td>
+          <td>{{ m["Stycket börjar"] }}</td><td>{{ m["Stycket slutar"] }}</td>
+          <td>{{ m["Längd"] }}</td><td>{{ m["Artist"] }}</td>
+          <td>{{ m["Status"] }}{% if m["Kontrolleras"] %} ⚠{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="muted">No music detected.</p>{% endif %}
+
+    {# Credits #}
+    <h2>End credits ({{ credits|length }})</h2>
+    {% if credits %}
+    <table>
+      <thead><tr><th>Roll</th><th>Namn</th><th>Roll (original)</th><th></th></tr></thead>
+      <tbody>
+      {% for c in credits %}
+        <tr>
+          <td>{{ c["Roll"] }}</td><td>{{ c["Namn"] }}</td>
+          <td class="muted small">{{ c["Roll (original)"] }}</td>
+          <td>{% if c["Kontrolleras"] %}<span class="badge warn">kontrollera</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="muted">No credits extracted.</p>{% endif %}
+
+    {# File info + warnings #}
+    {% set F = summary.get("fileinfo") or {} %}
+    {% if F %}<p class="muted small">File (reference only): {{ F.resolution }} · {{ F.fps }} fps · {{ F.video_codec }}</p>{% endif %}
+    {% if summary.get("warnings") %}
+      <details class="muted small"><summary>Notes ({{ summary.warnings|length }})</summary>
+        <ul>{% for w in summary.warnings %}<li>{{ w }}</li>{% endfor %}</ul></details>
+    {% endif %}
+
+    {# Downloads #}
+    <h2>Download</h2>
+    <p class="downloads">
+      {% for f in downloads %}<a class="button" href="/job/{{ job['id'] }}/download/{{ f }}">{{ f }}</a>{% endfor %}
+    </p>
+    <a class="primary button" href="/">Analyse another film</a>
+  </section>
+{% endif %}
+{% endblock %}

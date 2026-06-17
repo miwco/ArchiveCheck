@@ -16,6 +16,9 @@ env/
 vc_output/
 vc_output*/
 
+# Web app data (SQLite + cached results; contains personal names)
+web_data/
+
 # Local binaries fetched by install.ps1 (e.g. fpcalc)
 tools/
 
@@ -38,3 +41,4 @@ Thumbs.db
 .idea/
 .vscode/
 output/
+.claude/

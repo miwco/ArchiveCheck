@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card narrow">
+  <h1>Sign in</h1>
+  <p class="muted">Enter the access code provided by the archive team.</p>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <form action="/login" method="post">
+    <label for="access_code">Access code</label>
+    <input type="password" id="access_code" name="access_code" autofocus required>
+    <button type="submit" class="primary">Continue</button>
+  </form>
+</section>
+{% endblock %}

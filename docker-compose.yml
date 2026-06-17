@@ -1,0 +1,15 @@
+services:
+  archivecheck:
+    build: .
+    image: archivecheck-web
+    ports:
+      - "8000:8000"          # put a reverse proxy (HTTPS) in front of this
+    env_file:
+      - .env                 # ANTHROPIC_API_KEY, ACOUSTID_API_KEY, VC_ACCESS_CODE, VC_SESSION_SECRET
+    environment:
+      - VC_DATA_DIR=/data
+    volumes:
+      - ./web_data:/data     # SQLite + cached results persist here
+    restart: unless-stopped
+    # ~2 GB RAM per concurrent job (TensorFlow); size the host accordingly.
+    mem_limit: 4g

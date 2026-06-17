@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>Analyse a film</h1>
+  <p class="muted">
+    Paste an Arcada player link. The tool extracts the <strong>music cue sheet</strong>,
+    <strong>end credits</strong>, and an <strong>EBU&nbsp;R128 loudness</strong> check.
+    Analysis runs on the server and can take a few minutes.
+  </p>
+
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  <form action="/submit" method="post">
+    <label for="source">Arcada player link</label>
+    <input type="url" id="source" name="source" placeholder="https://luckan.arcada.fi/kmbokning/external/player.php?id=…"
+           value="{{ source or '' }}" autofocus required>
+    <button type="submit" class="primary">Analyse</button>
+  </form>
+
+  <ul class="limits muted">
+    <li>Max video length: {{ max_minutes }} minutes — longer films are refused.</li>
+    <li>Analyses left today: <strong>{{ quota.remaining }}</strong> / {{ quota.max }}.</li>
+    <li>Already-analysed films return instantly from cache (no new processing).</li>
+  </ul>
+</section>
+{% endblock %}
